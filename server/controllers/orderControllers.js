@@ -94,28 +94,35 @@ export const paymentOrder = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (order) {
-      order.isPaid = true;
-      order.paidAt = Date.now();
-      order.paymentResult = {
-        id: req.body.id,
-        status: req.body.status,
-        update_time: req.body.update_time,
-      };
+      if (!order.isPaid) {
+        order.isPaid = true;
+        order.paidAt = Date.now();
+        order.paymentResult = {
+          id: req.body.id,
+          status: req.body.status,
+          update_time: req.body.update_time,
+        };
 
-      const updateOrder = await order.save();
-      await Promise.all(
-        order.orderItems.map(async (item) => {
-          const product = await Product.findById(item.productId);
-          product.qtySold = product.qtySold + item.qty;
-          product.countInStock = product.countInStock - item.qty;
-          await product.save();
-        })
-      );
+        const updateOrder = await order.save();
+        await Promise.all(
+          order.orderItems.map(async (item) => {
+            const product = await Product.findById(item.productId);
+            product.qtySold = product.qtySold + item.qty;
+            product.countInStock = product.countInStock - item.qty;
+            await product.save();
+          })
+        );
 
-      res.status(201).json({
-        success: true,
-        order: updateOrder,
-      });
+        res.status(201).json({
+          success: true,
+          order: updateOrder,
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: "Order has been paid!",
+        });
+      }
     } else {
       res.status(404).json({
         success: false,
