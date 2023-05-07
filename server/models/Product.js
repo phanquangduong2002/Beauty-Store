@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const reviewSchema = mongoose.Schema(
   {
-    user: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
       ref: "User",
@@ -55,6 +55,11 @@ const productSchema = mongoose.Schema(
       default: 0,
     },
     price: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    qtySold: {
       type: Number,
       required: true,
       default: 0,

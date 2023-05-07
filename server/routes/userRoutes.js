@@ -8,6 +8,6 @@ const userRoute = express.Router();
 userRoute.get("/:id", getUser);
 
 // Update user
-userRoute.put("/update/:id", verifyToken, updateUser);
+userRoute.put("/:id/update", verifyToken, updateUser);
 
 export default userRoute;
