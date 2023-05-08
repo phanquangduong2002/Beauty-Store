@@ -138,6 +138,51 @@ export const paymentOrder = async (req, res) => {
   }
 };
 
+// Delivered
+
+export const deliveredOrder = async (req, res) => {
+  const orderId = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    return res.status(404).json({
+      success: false,
+      message: "Order not found",
+    });
+  }
+  try {
+    const order = await Order.findById(req.params.id);
+    if (order) {
+      if (!order.isDelivered) {
+        order.isDelivered = true;
+        order.deliveredAt = Date.now();
+
+        const updateOrder = await order.save();
+
+        res.status(201).json({
+          success: true,
+          order: updateOrder,
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: "Order has been delivered!",
+        });
+      }
+    } else {
+      res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 // Get user orders
 export const getUserOrders = async (req, res) => {
   try {
