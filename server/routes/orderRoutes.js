@@ -7,6 +7,7 @@ import {
   getOrder,
   getUserOrders,
   paymentOrder,
+  receivedOrder,
 } from "../controllers/orderControllers.js";
 
 const orderRoute = express.Router();
@@ -22,6 +23,9 @@ orderRoute.put("/:id/pay", verifyToken, paymentOrder);
 
 // Delivered
 orderRoute.put("/:id/delivered", verifyToken, deliveredOrder);
+
+// Received
+orderRoute.put("/:id/received", verifyToken, receivedOrder);
 
 // Get user orders
 orderRoute.get("/", verifyToken, getUserOrders);

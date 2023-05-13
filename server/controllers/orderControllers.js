@@ -3,42 +3,53 @@ import mongoose from "mongoose";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 
-// Create order
+// Create order or add product to order
 export const createOrder = async (req, res) => {
-  const {
-    userId,
-    orderItems,
-    shippingAddress,
-    paymentMethod,
-    itemsPrice,
-    shippingPrice,
-    totalPrice,
-  } = req.body;
+  const { userId, orderItem } = req.body;
 
-  if (orderItems && orderItems.length === 0) {
+  if (!orderItem) {
     return res.status(400).json({
       success: false,
-      message: "No order items",
+      message: "No order item",
     });
   }
 
   try {
-    const order = new Order({
-      userId,
-      orderItems,
-      shippingAddress,
-      paymentMethod,
-      itemsPrice,
-      shippingPrice,
-      totalPrice,
-    });
+    const order = await Order.findOne({ userId });
+    if (!order) {
+      const Neworder = new Order({
+        userId,
+        orderItems: [{ orderItem }],
+      });
 
-    const createOrder = await order.save();
+      const createOrder = await Neworder.save();
 
-    res.status(201).json({
-      success: true,
-      order: createOrder,
-    });
+      res.status(201).json({
+        success: true,
+        order: createOrder,
+      });
+    } else {
+      // Check if the product already exists in orderItems
+      const index = order.orderItems.findIndex(
+        (item) => item.orderItem.productId.toString() === orderItem.productId
+      );
+
+      if (index !== -1) {
+        // Product already exists in orderItems
+        order.orderItems[index].orderItem.qty = orderItem.qty;
+        order.orderItems[index].orderItem.price = orderItem.price;
+      } else {
+        // Product doesn't exist in orderItems
+        order.orderItems.push({ orderItem });
+      }
+
+      const updateOrder = await order.save();
+
+      res.status(201).json({
+        success: true,
+        order: updateOrder,
+      });
+    }
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: "Internal server error" });
@@ -176,6 +187,53 @@ export const deliveredOrder = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// Delivered successfully
+export const receivedOrder = async (req, res) => {
+  const orderId = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    return res.status(404).json({
+      success: false,
+      message: "Order not found",
+    });
+  }
+
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (order) {
+      if (!order.isReceived) {
+        order.isReceived = true;
+        order.receivedAt = Date.now();
+
+        const updateOrder = await order.save();
+
+        res.status(201).json({
+          success: true,
+          order: updateOrder,
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: "Order has been delivered successfully!",
+        });
+      }
+    } else {
+      res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+
     res.status(500).json({
       success: false,
       message: "Internal server error",

@@ -5,6 +5,12 @@ const products = [
     category: "Sữa rửa mặt",
     description: "Mô tả",
   },
+  {
+    name: "Kem dưỡng da",
+    image: "image.png",
+    category: "Kem dưỡng da",
+    description: "Mô tả",
+  },
 ];
 
 export default products;
