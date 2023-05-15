@@ -3,6 +3,7 @@ import { verifyToken } from "../middleware/verifyToken.js";
 
 import {
   createOrder,
+  removeProduct,
   deliveredOrder,
   getOrder,
   getUserOrders,
@@ -14,6 +15,10 @@ const orderRoute = express.Router();
 
 // Create order
 orderRoute.post("/", verifyToken, createOrder);
+
+// Remove product from order
+
+orderRoute.delete("/:id/remove", verifyToken, removeProduct);
 
 // Get order by id
 orderRoute.get("/:id", verifyToken, getOrder);

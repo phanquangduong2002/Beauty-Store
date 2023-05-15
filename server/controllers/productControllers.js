@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import User from "../models/User.js";
 
+// Get all products
 export const getAllProducts = async (req, res) => {
   try {
     const products = await Product.find({});
@@ -16,6 +17,95 @@ export const getAllProducts = async (req, res) => {
   }
 };
 
+// Create product
+export const createProduct = async (req, res) => {
+  const { name, image, category, description } = req.body;
+  if (!name || !image || !category || !description)
+    return res.status(400).json({
+      success: false,
+      message: "Missing product information",
+    });
+
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user.isAdmin)
+      return res.status(403).json({
+        success: false,
+        message: "Only admin can create product",
+      });
+
+    const newProduct = new Product(req.body);
+    await newProduct.save();
+
+    res.status(200).json({
+      success: true,
+      product: newProduct,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// Update product
+
+export const updateProduct = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user.isAdmin)
+      return res.status(403).json({
+        success: false,
+        message: "Only admin can update product",
+      });
+
+    const productId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    const updateFields = {};
+
+    for (const field in req.body) {
+      if (req.body[field]) {
+        updateFields[field] = req.body[field];
+      }
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      productId,
+      updateFields,
+      { new: true }
+    );
+
+    if (!updatedProduct) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      product: updatedProduct,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// Get product by id
 export const getProduct = async (req, res) => {
   const productId = req.params.id;
 
@@ -88,6 +178,62 @@ export const createReview = async (req, res) => {
         res.status(201).json({
           success: true,
           message: "Reviewed added",
+        });
+      }
+    } else {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// Delete review
+
+export const deleteReview = async (req, res) => {
+  const productId = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    return res.status(404).json({
+      success: false,
+      message: "Product not found",
+    });
+  }
+
+  try {
+    const product = await Product.findById(productId);
+
+    if (product) {
+      const alreadyReviewed = product.reviews.find(
+        (r) => r.userId.toString() === req.user.id.toString()
+      );
+      if (!alreadyReviewed) {
+        res.status(400).json({
+          success: false,
+          message: "The product has not been rated yet",
+        });
+      } else {
+        const index = product.reviews.findIndex(
+          (item) => item.userId.toString() === req.user.id
+        );
+
+        product.reviews.splice(index, 1);
+        product.numReviews = product.reviews.length;
+        product.rating =
+          product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+          product.reviews.length;
+        await product.save();
+
+        res.status(201).json({
+          success: true,
+          message: "Reviewed deleted",
         });
       }
     } else {
