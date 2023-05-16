@@ -4,7 +4,7 @@ import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
 
 export const signup = async (req, res) => {
-  const { name, email, password, isAdmin } = req.body;
+  const { name, email, password } = req.body;
 
   if (!name || !email || !password)
     return res.status(400).json({
@@ -15,7 +15,10 @@ export const signup = async (req, res) => {
   try {
     const user = await User.findOne({ email });
 
-    if (user) return res.status(400).json({ success: false, message: "Email already taken" });
+    if (user)
+      return res
+        .status(400)
+        .json({ success: false, message: "Email already taken" });
 
     const hashedPassword = bcrypt.hashSync(password, 10);
 
@@ -53,11 +56,17 @@ export const signin = async (req, res) => {
   try {
     const user = await User.findOne({ email });
 
-    if (!user) return res.status(400).json({ success: false, message: "Incorrect email or password" });
+    if (!user)
+      return res
+        .status(400)
+        .json({ success: false, message: "Incorrect email or password" });
 
     const isCorrect = await bcrypt.compare(req.body.password, user.password);
 
-    if (!isCorrect) return res.status(400).json({ success: false, message: "Incorrect email or password" });
+    if (!isCorrect)
+      return res
+        .status(400)
+        .json({ success: false, message: "Incorrect email or password" });
 
     res.status(200).json({
       success: true,

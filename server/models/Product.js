@@ -35,13 +35,18 @@ const productSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    category: {
-      type: String,
-      required: true,
-    },
     description: {
       type: String,
       required: true,
+    },
+    parentCategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ParentCategory",
+      required: true,
+    },
+    subCategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SubCategory",
     },
     reviews: [reviewSchema],
     rating: {

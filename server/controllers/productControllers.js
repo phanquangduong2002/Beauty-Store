@@ -5,7 +5,9 @@ import User from "../models/User.js";
 // Get all products
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find({});
+    const products = await Product.find({})
+      .populate("parentCategory", "name")
+      .populate("subCategory", "name");
 
     res.status(200).json({
       success: true,
@@ -17,10 +19,42 @@ export const getAllProducts = async (req, res) => {
   }
 };
 
+// Get product by id
+export const getProduct = async (req, res) => {
+  const productId = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    return res.status(404).json({
+      success: false,
+      message: "Product not found",
+    });
+  }
+  try {
+    const product = await Product.findById(productId)
+      .populate("parentCategory", "name")
+      .populate("subCategory", "name");
+
+    if (product) {
+      res.status(200).json({
+        success: true,
+        product: product,
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
 // Create product
 export const createProduct = async (req, res) => {
-  const { name, image, category, description } = req.body;
-  if (!name || !image || !category || !description)
+  const { name, image, parentCategory, subCategory, description } = req.body;
+  if (!name || !image || !description || !parentCategory || !subCategory)
     return res.status(400).json({
       success: false,
       message: "Missing product information",
@@ -52,7 +86,6 @@ export const createProduct = async (req, res) => {
 };
 
 // Update product
-
 export const updateProduct = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -105,33 +138,36 @@ export const updateProduct = async (req, res) => {
   }
 };
 
-// Get product by id
-export const getProduct = async (req, res) => {
-  const productId = req.params.id;
+// Delete product
 
-  if (!mongoose.Types.ObjectId.isValid(productId)) {
-    return res.status(404).json({
-      success: false,
-      message: "Product not found",
-    });
-  }
+export const deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findById(productId);
+    const user = await User.findById(req.user.id);
 
-    if (product) {
-      res.status(200).json({
-        success: true,
-        product: product,
+    if (!user.isAdmin)
+      return res.status(403).json({
+        success: false,
+        message: "Only admin can update product",
       });
-    } else {
-      res.status(404).json({
+
+    const deletedProduct = await Product.findByIdAndDelete(req.params.id);
+
+    if (!deletedProduct) {
+      return res.status(404).json({
         success: false,
         message: "Product not found",
       });
     }
+    res.status(200).json({
+      success: true,
+      message: "Delete product successfully",
+    });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
