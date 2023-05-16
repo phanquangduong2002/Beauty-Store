@@ -1,5 +1,5 @@
 function App() {
-  return <div className="App">Beauty Store</div>;
+  return <div className="text-base font-semibold">Kem và sữa dưỡng da</div>;
 }
 
 export default App;

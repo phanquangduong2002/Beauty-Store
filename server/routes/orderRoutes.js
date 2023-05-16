@@ -13,7 +13,7 @@ import {
 
 const orderRoute = express.Router();
 
-// Create order
+// Create order or add product to order
 orderRoute.post("/", verifyToken, createOrder);
 
 // Remove product from order
