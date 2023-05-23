@@ -1,6 +1,9 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-import User from "../models/User.js";
+import User from "../models/user.model.js";
+
+import Cart from "../models/cart.model.js";
+
 import generateToken from "../utils/generateToken.js";
 
 export const signup = async (req, res) => {
@@ -13,7 +16,7 @@ export const signup = async (req, res) => {
     });
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).lean();
 
     if (user)
       return res
@@ -25,6 +28,10 @@ export const signup = async (req, res) => {
     const newUser = new User({ name, email, password: hashedPassword });
 
     await newUser.save();
+
+    await Cart.create({
+      UserId: newUser._id,
+    });
 
     res.status(200).json({
       success: true,
@@ -54,7 +61,7 @@ export const signin = async (req, res) => {
     });
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).lean();
 
     if (!user)
       return res

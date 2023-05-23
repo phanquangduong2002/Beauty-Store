@@ -1,7 +1,7 @@
 import express from "express";
 import { verifyToken } from "../middleware/verifyToken.js";
 
-import { getUser, updateUser } from "../controllers/userControllers.js";
+import { getUser, updateUser } from "../controllers/user.controller.js";
 const userRoute = express.Router();
 
 // Get user

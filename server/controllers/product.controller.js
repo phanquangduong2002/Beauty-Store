@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
-import Product from "../models/Product.js";
-import User from "../models/User.js";
+import Product from "../models/product.model.js";
+import User from "../models/user.model.js";
+import Inventory from "../models/inventory.model.js";
+import Review from "../models/review.model.js";
 
 // Get all products
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find({})
-      .populate("parentCategory", "name")
-      .populate("subCategory", "name");
+    const products = await Product.find({}).lean().sort({ _id: -1 });
 
     res.status(200).json({
       success: true,
@@ -30,9 +30,7 @@ export const getProduct = async (req, res) => {
     });
   }
   try {
-    const product = await Product.findById(productId)
-      .populate("parentCategory", "name")
-      .populate("subCategory", "name");
+    const product = await Product.findById(productId).lean();
 
     if (product) {
       res.status(200).json({
@@ -53,24 +51,32 @@ export const getProduct = async (req, res) => {
 
 // Create product
 export const createProduct = async (req, res) => {
-  const { name, image, parentCategory, subCategory, description } = req.body;
-  if (!name || !image || !description || !parentCategory || !subCategory)
+  const { name, thumb, price, category, qty, attributes } = req.body;
+  if (!name || !thumb || !price || !qty || !category || !attributes)
     return res.status(400).json({
       success: false,
       message: "Missing product information",
     });
 
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).lean();
 
     if (!user.isAdmin)
       return res.status(403).json({
         success: false,
-        message: "Only admin can create product",
+        message: "Unauthorized access",
       });
 
-    const newProduct = new Product(req.body);
-    await newProduct.save();
+    const newProduct = await Product.create(req.body);
+
+    if (newProduct) {
+      await Inventory.create({
+        productId: newProduct._id,
+        stock: req.body.qty,
+      });
+
+      await Review.create({ productId: newProduct._id });
+    }
 
     res.status(200).json({
       success: true,
@@ -93,7 +99,7 @@ export const updateProduct = async (req, res) => {
     if (!user.isAdmin)
       return res.status(403).json({
         success: false,
-        message: "Only admin can update product",
+        message: "Unauthorized access",
       });
 
     const productId = req.params.id;
@@ -147,7 +153,7 @@ export const deleteProduct = async (req, res) => {
     if (!user.isAdmin)
       return res.status(403).json({
         success: false,
-        message: "Only admin can update product",
+        message: "Unauthorized access",
       });
 
     const deletedProduct = await Product.findByIdAndDelete(req.params.id);
@@ -158,6 +164,10 @@ export const deleteProduct = async (req, res) => {
         message: "Product not found",
       });
     }
+
+    const deletedReview = await Review.findOneAndDelete({
+      productId: req.params.id,
+    });
     res.status(200).json({
       success: true,
       message: "Delete product successfully",
@@ -172,6 +182,7 @@ export const deleteProduct = async (req, res) => {
 };
 
 // Create review
+
 export const createReview = async (req, res) => {
   const { rating, comment } = req.body;
 
@@ -186,42 +197,46 @@ export const createReview = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
 
-    if (product) {
-      const alreadyReviewed = product.reviews.find(
-        (r) => r.userId.toString() === req.user.id.toString()
-      );
-      if (alreadyReviewed) {
-        res.status(400).json({
-          success: false,
-          message: "Product already Reviewed",
-        });
-      } else {
-        const user = await User.findById(req.user.id);
-        const review = {
-          name: user.name,
-          rating: Number(rating),
-          comment: comment,
-          userId: user._id,
-        };
-
-        product.reviews.push(review);
-        product.numReviews = product.reviews.length;
-        product.rating =
-          product.reviews.reduce((acc, item) => item.rating + acc, 0) /
-          product.reviews.length;
-        await product.save();
-
-        res.status(201).json({
-          success: true,
-          message: "Reviewed added",
-        });
-      }
-    } else {
+    if (!product)
       return res.status(404).json({
         success: false,
         message: "Product not found",
       });
+
+    const user = await User.findById(req.user.id).lean();
+    const body = {
+      name: user.name,
+      rating: Number(rating),
+      comment: comment,
+      userId: user._id,
+    };
+
+    const review = await Review.findOne({ productId: req.params.id });
+
+    const alreadyReviewed = review.reviews.find(
+      (r) => r.userId.toString() === req.user.id.toString()
+    );
+    if (alreadyReviewed) {
+      return res.status(400).json({
+        success: false,
+        message: "Product already Reviewed",
+      });
     }
+
+    review.reviews.push(body);
+
+    await review.save();
+
+    product.numReviews = review.reviews.length;
+    product.rating =
+      review.reviews.reduce((acc, item) => item.rating + acc, 0) /
+      review.reviews.length;
+    await product.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Reviewed added",
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -246,36 +261,46 @@ export const deleteReview = async (req, res) => {
   try {
     const product = await Product.findById(productId);
 
-    if (product) {
-      const alreadyReviewed = product.reviews.find(
-        (r) => r.userId.toString() === req.user.id.toString()
-      );
-      if (!alreadyReviewed) {
-        res.status(400).json({
-          success: false,
-          message: "The product has not been rated yet",
-        });
-      } else {
-        const index = product.reviews.findIndex(
-          (item) => item.userId.toString() === req.user.id
-        );
-
-        product.reviews.splice(index, 1);
-        product.numReviews = product.reviews.length;
-        product.rating =
-          product.reviews.reduce((acc, item) => item.rating + acc, 0) /
-          product.reviews.length;
-        await product.save();
-
-        res.status(201).json({
-          success: true,
-          message: "Reviewed deleted",
-        });
-      }
-    } else {
+    if (!product) {
       return res.status(404).json({
         success: false,
         message: "Product not found",
+      });
+    }
+
+    const review = await Review.findOne({ productId: req.params.id });
+
+    const alreadyReviewed = review.reviews.find(
+      (r) => r.userId.toString() === req.user.id.toString()
+    );
+
+    if (!alreadyReviewed) {
+      res.status(400).json({
+        success: false,
+        message: "The product has not been rated yet",
+      });
+    } else {
+      const index = review.reviews.findIndex(
+        (r) => r.userId.toString() === req.user.id.toString()
+      );
+
+      review.reviews.splice(index, 1);
+      await review.save();
+
+      product.numReviews = review.reviews.length;
+      if (product.numReviews === 0) {
+        product.rating = 0;
+      } else {
+        product.rating =
+          review.reviews.reduce((acc, item) => item.rating + acc, 0) /
+          review.reviews.length;
+      }
+
+      await product.save();
+
+      res.status(201).json({
+        success: true,
+        message: "Reviewed deleted",
       });
     }
   } catch (error) {

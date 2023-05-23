@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-import User from "../models/User.js";
+import User from "../models/user.model.js";
 import generateToken from "../utils/generateToken.js";
 
 // Get user by id
@@ -15,7 +15,7 @@ export const getUser = async (req, res) => {
   }
 
   try {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).lean();
 
     if (user) {
       res.status(200).json({
@@ -47,7 +47,7 @@ export const getUser = async (req, res) => {
 // Update user
 export const updateUser = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).lean();
 
     if (user) {
       user.name = req.body.name || user.name;

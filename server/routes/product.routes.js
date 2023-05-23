@@ -8,7 +8,7 @@ import {
   getAllProducts,
   getProduct,
   deleteProduct,
-} from "../controllers/productControllers.js";
+} from "../controllers/product.controller.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 
 const productRoute = express.Router();
