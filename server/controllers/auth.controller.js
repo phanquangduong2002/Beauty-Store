@@ -30,7 +30,7 @@ export const signup = async (req, res) => {
     await newUser.save();
 
     await Cart.create({
-      UserId: newUser._id,
+      userId: newUser._id,
     });
 
     res.status(200).json({

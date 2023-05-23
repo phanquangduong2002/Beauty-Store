@@ -32,22 +32,22 @@ export const orderByUser = async (req, res) => {
   try {
     const products = newOrderIds.flatMap((order) => order.itemProduct);
 
-    const acquireProduct = [];
-    for (let i = 0; i < products.length; i++) {
-      const { productId, quantity } = products[i];
-      const keyLock = await acquireLock(productId, quantity, cartId);
-      acquireProduct.push(keyLock ? true : false);
-      if (keyLock) {
-        await releaseLock(keyLock);
-      }
-    }
+    // const acquireProduct = [];
+    // for (let i = 0; i < products.length; i++) {
+    //   const { productId, quantity } = products[i];
+    //   const keyLock = await acquireLock(productId, quantity, cartId);
+    //   acquireProduct.push(keyLock ? true : false);
+    //   if (keyLock) {
+    //     await releaseLock(keyLock);
+    //   }
+    // }
 
-    if (acquireLock.includes(false)) {
-      return res.status(400).json({
-        success: false,
-        message: "The product has been updated, please return to the cart",
-      });
-    }
+    // if (acquireLock.includes(false)) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "The product has been updated, please return to the cart",
+    //   });
+    // }
     const newOrder = await Order.create({
       userId,
       orderCheckout: checkoutOrder,
@@ -56,14 +56,14 @@ export const orderByUser = async (req, res) => {
       orderProducts: newOrderIds,
     });
 
-    // for (let i = 0; i < products.length; i++) {
-    //   const { productId, quantity } = products[i];
-    //   const updateInventory = await reservationInventory({
-    //     cartId,
-    //     productId,
-    //     quantity,
-    //   });
-    // }
+    for (let i = 0; i < products.length; i++) {
+      const { productId, quantity } = products[i];
+      const updateInventory = await reservationInventory({
+        cartId,
+        productId,
+        quantity,
+      });
+    }
 
     if (!newOrder)
       return res.status(400).json({

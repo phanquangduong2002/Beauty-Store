@@ -7,6 +7,7 @@ import Order from "./pages/Order/Order";
 import Signin from "./pages/Signin/Signin";
 import Signup from "./pages/Signup/Signup";
 import Error from "./pages/Error/Error";
+import Cart from "./pages/Cart/Cart";
 
 import Header from "./components/Header/Header";
 
@@ -34,23 +35,31 @@ const router = createBrowserRouter([
         element: <Order />,
       },
       {
+        path: "/cart",
+        element: <Cart />,
+      },
+      {
         path: "/profile",
         element: <Profile />,
       },
-      {
-        path: "/account/signin",
-        element: <Signin />,
-      },
-      {
-        path: "/account/register",
-        element: <Signup />,
-      },
     ],
+  },
+  {
+    path: "account/signin",
+    element: <Signin />,
+  },
+  {
+    path: "account/register",
+    element: <Signup />,
   },
 ]);
 
 function App() {
-  return <RouterProvider router={router}></RouterProvider>;
+  return (
+    <div className="container mx-auto">
+      <RouterProvider router={router}></RouterProvider>
+    </div>
+  );
 }
 
 export default App;

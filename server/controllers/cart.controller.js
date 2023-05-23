@@ -61,6 +61,7 @@ export const addToCart = async (req, res) => {
 
     if (!userCart.products.length) {
       userCart.products = [product];
+      userCart.count_product += 1;
       await userCart.save();
 
       return res.status(200).json({
@@ -76,6 +77,7 @@ export const addToCart = async (req, res) => {
 
       if (!productInCart) {
         userCart.products.push(product);
+        userCart.count_product -= 1;
         await userCart.save();
 
         return res.status(200).json({
