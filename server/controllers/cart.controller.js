@@ -37,6 +37,9 @@ const deleteUserCart = async ({ userId, productId }) => {
           productId,
         },
       },
+      $inc: {
+        count_product: -1,
+      },
     };
 
   return await Cart.updateOne(query, updateSet);
@@ -55,7 +58,7 @@ export const addToCart = async (req, res) => {
 
       return res.status(200).json({
         success: true,
-        message: "Add to cart successfully!",
+        cart: newCart,
       });
     }
 
@@ -66,7 +69,7 @@ export const addToCart = async (req, res) => {
 
       return res.status(200).json({
         success: true,
-        message: "Add to cart successfully!",
+        cart: userCart,
       });
     }
 
@@ -77,34 +80,35 @@ export const addToCart = async (req, res) => {
 
       if (!productInCart) {
         userCart.products.push(product);
-        userCart.count_product -= 1;
+        userCart.count_product += 1;
         await userCart.save();
 
         return res.status(200).json({
           success: true,
-          message: "Add to cart successfully!",
+          cart: userCart,
         });
       } else {
         if (quantity === 0) {
           await deleteUserCart({ userId, productId });
 
+          const updatedCart = await Cart.findOne({ userId });
+
           return res.status(200).json({
             success: true,
-            message: "Remove to cart successfully!",
+            cart: updatedCart,
           });
         }
 
-        const updateCart = await updateUserCartQuantity({
+        const updatedCart = await updateUserCartQuantity({
           userId,
           product: {
             productId,
             quantity: quantity - oldQuantity,
           },
         });
-
         return res.status(200).json({
           success: true,
-          message: "Add to cart successfully!",
+          cart: updatedCart,
         });
       }
     }

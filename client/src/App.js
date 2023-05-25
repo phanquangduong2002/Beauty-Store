@@ -11,6 +11,11 @@ import Cart from "./pages/Cart/Cart";
 
 import Header from "./components/Header/Header";
 
+import { LOCAL_STORAGE_TOKEN_NAME } from "./api/constants";
+import setAuthToken from "./utils/setAuthToken";
+import DetalProduct from "./pages/DetailProduct/DetalProduct";
+import Checkout from "./pages/Checkout/Checkout";
+
 const Layout = () => {
   return (
     <div>
@@ -37,6 +42,14 @@ const router = createBrowserRouter([
       {
         path: "/cart",
         element: <Cart />,
+      },
+      {
+        path: "/checkout",
+        element: <Checkout />,
+      },
+      {
+        path: "/products/:id",
+        element: <DetalProduct />,
       },
       {
         path: "/profile",

@@ -2,6 +2,7 @@ import express from "express";
 
 import {
   createProduct,
+  findAllProducts,
   updateProduct,
   createReview,
   deleteReview,
@@ -15,6 +16,9 @@ const productRoute = express.Router();
 
 // Get all products
 productRoute.get("/", getAllProducts);
+
+// Find products
+productRoute.get("/find", findAllProducts);
 
 // Get product by id
 productRoute.get("/:id", getProduct);

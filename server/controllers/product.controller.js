@@ -4,10 +4,12 @@ import User from "../models/user.model.js";
 import Inventory from "../models/inventory.model.js";
 import Review from "../models/review.model.js";
 
+import getSelectData from "../utils/getInfoData.js";
+
 // Get all products
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find({}).lean().sort({ _id: -1 });
+    const products = await Product.find({}).sort({ _id: -1 }).lean();
 
     res.status(200).json({
       success: true,
@@ -46,6 +48,56 @@ export const getProduct = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+// Find Product
+
+export const findAllProducts = async (req, res) => {
+  const {
+    limit = 50,
+    sort = "ctime",
+    page = 1,
+    select = [
+      "_id",
+      "name",
+      "thumb",
+      "price",
+      "rating",
+      "numReviews",
+      "qtySold",
+    ],
+    category = "",
+  } = req.query;
+
+  const skip = (page - 1) * limit;
+
+  let sortBy;
+
+  if (sort === "ctime") sortBy = { _id: -1 };
+  if (sort === "qtySold") sortBy = { qtySold: -1 };
+  if (sort === "rating") sortBy = { rating: -1 };
+
+  const query = category ? { category } : {};
+
+  try {
+    const products = await Product.find(query)
+      .sort(sortBy)
+      .skip(skip)
+      .limit(limit)
+      .select(getSelectData(select))
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      products: products,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 

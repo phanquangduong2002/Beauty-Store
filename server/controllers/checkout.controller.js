@@ -8,6 +8,23 @@ import Order from "../models/order.model.js";
 
 import { acquireLock, releaseLock } from "../services/redis.service.js";
 import { reservationInventory } from "../repositories/inventory.repo.js";
+import { updateQtySoldProduct } from "../repositories/product.repo.js";
+
+const deleteUserCart = async ({ userId, productId }) => {
+  const query = { userId },
+    updateSet = {
+      $pull: {
+        products: {
+          productId,
+        },
+      },
+      $inc: {
+        count_product: -1,
+      },
+    };
+
+  return await Cart.updateOne(query, updateSet);
+};
 
 const checkOutProductServer = async (product) => {
   const foundProduct = await Product.findById(product.productId);
@@ -31,6 +48,7 @@ export const orderByUser = async (req, res) => {
   } = req.body;
   try {
     const products = newOrderIds.flatMap((order) => order.itemProduct);
+    console.log(products);
 
     // const acquireProduct = [];
     // for (let i = 0; i < products.length; i++) {
@@ -62,6 +80,23 @@ export const orderByUser = async (req, res) => {
         cartId,
         productId,
         quantity,
+      });
+    }
+
+    for (let i = 0; i < products.length; i++) {
+      const { productId, quantity } = products[i];
+      const updateProduct = await updateQtySoldProduct({
+        cartId,
+        productId,
+        quantity,
+      });
+    }
+
+    for (let i = 0; i < products.length; i++) {
+      const { productId, quantity } = products[i];
+      const updateCart = await deleteUserCart({
+        userId,
+        productId,
       });
     }
 
@@ -124,12 +159,12 @@ export const checkoutReview = async (req, res) => {
       const checkoutPrice =
         checkProductServer.price * checkProductServer.quantity;
 
-      checkoutOrder.totalPrice += checkoutPrice;
-
       const itemCheckout = {
         checkoutPrice,
         itemProduct: checkProductServer,
       };
+
+      checkoutOrder.totalPrice += checkoutPrice;
 
       checkoutOrder.totalCheckout += itemCheckout.checkoutPrice;
       newOrderIds.push(itemCheckout);
@@ -157,4 +192,57 @@ export const getOrdersByUser = async (req, res) => {};
 
 export const getOneOrderByUser = async (req, res) => {};
 
-export const updateOrderStatusByAdmin = async (req, res) => {};
+export const getAllOrdersByAdmin = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user)
+      return res.status(403).json({
+        success: false,
+        menubar: "You are not admin",
+      });
+
+    const orders = await Order.find({})
+      .sort({ _id: -1 })
+      .populate("userId", "name email");
+
+    res.status(200).json({
+      success: true,
+      orders: orders,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const updateOrderStatusByAdmin = async (req, res) => {
+  const { orderStatus } = req.body;
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user)
+      return res.status(403).json({
+        success: false,
+        menubar: "You are not admin",
+      });
+    const order = await Order.findById(req.params.orderId);
+    console.log(order);
+    order.orderStatus = orderStatus;
+    await order.save();
+
+    res.status(201).json({
+      success: true,
+      order: order,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};

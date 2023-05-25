@@ -60,8 +60,6 @@ const Signup = () => {
       });
       if (res.data.success) {
         dispatch(loginSuccess(res.data.user));
-        localStorage.setItem(LOCAL_STORAGE_TOKEN_NAME, res.data.user.token);
-        setAuthToken(localStorage[LOCAL_STORAGE_TOKEN_NAME]);
         navigate("/");
       }
     } catch (error) {

@@ -42,17 +42,15 @@ const Signin = () => {
         email,
         password,
       });
-      if (res.data.success) {
-        dispatch(loginSuccess(res.data.user));
-        localStorage.setItem(LOCAL_STORAGE_TOKEN_NAME, res.data.user.token);
-        setAuthToken(localStorage[LOCAL_STORAGE_TOKEN_NAME]);
+      if (res?.data?.success) {
+        dispatch(loginSuccess(res?.data?.user));
         navigate("/");
       }
     } catch (error) {
-      console.log(error.response.data);
+      console.log(error?.response?.data);
       dispatch(loginFailed());
       setError(true);
-      setMessage(error.response.data.message);
+      setMessage(error?.response?.data?.message);
 
       setTimeout(() => setError(false), 2000);
     }

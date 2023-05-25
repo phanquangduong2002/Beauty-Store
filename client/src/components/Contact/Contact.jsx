@@ -1,9 +1,27 @@
 import React from "react";
 
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../../redux/userSlice";
+
+import { Link, useNavigate } from "react-router-dom";
+
+import { LOCAL_STORAGE_TOKEN_NAME } from "../../api/constants";
+import setAuthToken from "../../utils/setAuthToken";
+
 const Contact = () => {
+  const { currentUser } = useSelector((state) => state.user);
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/account/signin");
+  };
+
   return (
     <div className="bg-secondaryBgColor">
-      <div className="max-w-[1200px] px-[15px] mx-auto">
+      <div className="max-w-[1200px] mx-auto">
         <div className="py-[6px] flex flex-row items-center justify-between">
           <div className="flex flex-row items-center justify-start gap-x-3">
             <span className="cursor-pointer">
@@ -123,7 +141,7 @@ const Contact = () => {
                 </span>
               </a>
             </div>
-            <div className="text-sm flex flex-row items-center gap-x-2 justify-start text-secondaryIconColor hover:text-greenColor transition-all duration-100 ease-in-out cursor-pointer">
+            <div className="group relative text-sm flex flex-row items-center gap-x-2 justify-start text-secondaryIconColor hover:text-greenColor transition-all duration-100 ease-in-out cursor-pointer before:absolute before:content before:w-full before:h-[40px] before:bg-transparent before:-bottom-[30px] before:right-0">
               <span>Tài khoản</span>
               <span>
                 <svg
@@ -140,6 +158,37 @@ const Contact = () => {
                   />
                 </svg>
               </span>
+              {!currentUser ? (
+                <div className="hidden w-[160px] absolute -bottom-[116px] right-0 py-3 px-4 rounded-lg bg-white border-[1px] border-secondaryIconColor group-hover:flex flex-col items-center justify-center text-secondaryColor text-base font-medium">
+                  <Link
+                    to={"/account/register"}
+                    className="p-1 mb-2 w-full border-[1px] border-secondaryColor rounded-md text-center hover:bg-secondaryColor hover:text-white transition-all duration-100 ease-in-out"
+                  >
+                    Đăng kí
+                  </Link>
+                  <Link
+                    to={"/account/signin"}
+                    className="p-1 w-full border-[1px] border-secondaryColor rounded-md text-center hover:bg-secondaryColor hover:text-white transition-all duration-100 ease-in-out"
+                  >
+                    Đăng nhập
+                  </Link>
+                </div>
+              ) : (
+                <div className="hidden w-[160px] absolute -bottom-[116px] right-0 py-3 px-4 rounded-lg bg-white border-[1px] border-secondaryIconColor group-hover:flex flex-col items-center justify-center text-secondaryColor text-base font-medium">
+                  <Link
+                    to={"/order"}
+                    className="p-1 mb-2 w-full border-[1px] border-secondaryColor rounded-md text-center hover:bg-secondaryColor hover:text-white transition-all duration-100 ease-in-out"
+                  >
+                    Đơn hàng
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="p-1 w-full border-[1px] border-secondaryColor rounded-md text-center hover:bg-secondaryColor hover:text-white transition-all duration-100 ease-in-out"
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

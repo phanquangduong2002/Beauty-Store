@@ -25,10 +25,11 @@ const orderSchema = mongoose.Schema(
 
     /* 
     orderShipping: {
+      name,
       tel,
-      address,
       city,
-      country
+      district,
+      address
     }
     */
 

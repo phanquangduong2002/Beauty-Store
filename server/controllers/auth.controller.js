@@ -92,3 +92,50 @@ export const signin = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+export const signinByAdmin = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password)
+    return res.status(400).json({
+      success: false,
+      message: "Missing email and/or password",
+    });
+
+  try {
+    const user = await User.findOne({ email }).lean();
+
+    if (!user)
+      return res
+        .status(400)
+        .json({ success: false, message: "Incorrect email or password" });
+
+    const isCorrect = await bcrypt.compare(req.body.password, user.password);
+
+    if (!isCorrect)
+      return res
+        .status(400)
+        .json({ success: false, message: "Incorrect email or password" });
+
+    if (!user.isAdmin)
+      return res
+        .status(400)
+        .json({ success: false, message: "You are not admin" });
+
+    res.status(200).json({
+      success: true,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        token: generateToken(user._id),
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};

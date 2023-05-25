@@ -1,6 +1,10 @@
 import express from "express";
 
-import { signin, signup } from "../controllers/auth.controller.js";
+import {
+  signin,
+  signinByAdmin,
+  signup,
+} from "../controllers/auth.controller.js";
 
 const authRoute = express.Router();
 
@@ -9,5 +13,9 @@ authRoute.post("/signup", signup);
 
 // Signin
 authRoute.post("/signin", signin);
+
+// Signin by admin
+
+authRoute.post("/signin/admin", signinByAdmin);
 
 export default authRoute;
