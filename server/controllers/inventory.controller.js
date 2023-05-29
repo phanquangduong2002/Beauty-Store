@@ -43,7 +43,7 @@ export const addStockToInventory = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Add stock to invetory successfully",
+      message: "Add stock to inventory successfully",
     });
   } catch (error) {
     console.log(error);
